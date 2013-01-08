@@ -21,7 +21,6 @@ var d = Cursor([0x01, 0x02]); // octals
 ```
 ###Cloning
 ```javascript
-
 //create a cursor pointing at the same buffer
 //and the same index
 var pos = curs.tell();
@@ -45,7 +44,6 @@ Cursor implements all of the `Buffer.writeXXX` methods in addition to `write` an
 However, Cursor deviates from Buffer by not offering a `copy` method. Instead, use `copyFrom`
 
 ```javascript
-
 //bytes from c2 are copied into c1
 c1.copyFrom(c2);
 ```
