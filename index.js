@@ -1,10 +1,8 @@
-var Cursor = function(buffer, __class__)
+var Cursor = function(buffer)
 {
-	__class__ = __class__ || Cursor;
-
-	if (!(this instanceof __class__))
+	if (!(this instanceof Cursor))
 	{
-		return new __class__(buffer);
+		return new Cursor(buffer);
 	}
 
 	if (!(buffer instanceof Buffer))
