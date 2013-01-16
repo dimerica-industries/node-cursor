@@ -23,6 +23,12 @@ Cursor.prototype =
 		return this._buffer;
 	},
 
+	tap: function(cb)
+	{
+		cb(this);
+		return this;
+	},
+
 	clone: function(newIndex)
 	{
 		var c = new this.constructor(this._buffer);
