@@ -10,14 +10,18 @@ var Cursor = function(buffer)
 		buffer = new Buffer(buffer);
 	}
 
-	this._buffer = buffer;
+	this._setBuffer(buffer);
 	this.rewind();
-
-	this.length = buffer.length;
 };
 
 Cursor.prototype =
 {
+	_setBuffer: function(buffer)
+	{
+		this._buffer = buffer;
+		this.length = buffer.length;
+	},
+
 	buffer: function()
 	{
 		return this._buffer;
@@ -112,6 +116,24 @@ Cursor.prototype =
 		var buf = source instanceof Buffer ? source: source.buffer();
 		buf.copy(this.buffer(), this.tell(), 0, buf.length);
 		this.seek('+', buf.length);
+
+		return this;
+	},
+
+	concat: function(list)
+	{
+		for (var i in list)
+		{
+			if (list[i] instanceof Cursor)
+			{
+				list[i] = list[i].buffer();
+			}
+		}
+
+		list.unshift(this.buffer());
+
+		var b = Buffer.concat(list);
+		this._setBuffer(b);
 
 		return this;
 	},
