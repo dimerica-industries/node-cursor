@@ -48,6 +48,36 @@ However, Cursor deviates from Buffer by not offering a `copy` method. Instead, u
 c1.copyFrom(c2);
 ```
 
+##Extending
+Sometimes it's beneficial to write have your own read/write primitives, while still providing access to the standard r/w operations.  In those cases, extending Cursor can help.
+
+```javascript
+var ProtocolCursor = Cursor.extend(
+{
+	readInt: function()
+	{
+		return this.readInt32BE();
+	},
+	
+	writeInt: function(n)
+	{
+		return this.writeInt32BE(n);
+	},
+	
+	readCrazyObject: function()
+	{
+		var len = this.readInt();
+		var bytes = this.slice(len);
+		
+		//unpack your bytes
+		...
+	}
+});
+
+var obj = ProtocolCursor(buffer).readCrazyObject();
+```
+
+
 # License (MIT)
 ```
 Copyright (c) 2013 Dimerica Industries, LLC

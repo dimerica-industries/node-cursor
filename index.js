@@ -11,7 +11,7 @@ var Cursor = function(buffer)
 	}
 
 	this._buffer = buffer;
-	this._index = 0;
+	this.rewind();
 
 	this.length = buffer.length;
 };
@@ -31,13 +31,8 @@ Cursor.prototype =
 
 	clone: function(newIndex)
 	{
-		var c = new this.constructor(this._buffer);
-		c._index = newIndex;
-
-		if (arguments.length === 0)
-		{
-			c._index = this._index;
-		}
+		var c = new this.constructor(this.buffer());
+		c.seek(arguments.length === 0 ? this.tell() : newIndex);
 
 		return c;
 	},
@@ -47,9 +42,27 @@ Cursor.prototype =
 		return this._index;
 	},
 
-	seek: function(index)
+	seek: function(op, index)
 	{
-		this._index = index;
+		if (arguments.length == 1)
+		{
+			index = op;
+			op = '=';
+		}
+
+		if (op == '+')
+		{
+			this._index += index;
+		}
+		else if (op == '-')
+		{
+			this._index -= index;
+		}
+		else
+		{
+			this._index = index;
+		}
+
 		return this;
 	},
 
@@ -60,24 +73,23 @@ Cursor.prototype =
 
 	eof: function()
 	{
-		return this._index == this._buffer.length;
+		return this.tell() == this.buffer().length;
 	},
 
 	write: function(string, length, encoding)
 	{
-		this._index += this._buffer.write(string, this._index, length, encoding);
-		return this;
+		return this.seek('+', this.buffer().write(string, this.tell(), length, encoding));
 	},
 
 	fill: function(value, length)
 	{
 		if (arguments.length == 1)
 		{
-			length = this._buffer.length - this._index;
+			length = this.buffer().length - this.tell();
 		}
 		
-		this._buffer.fill(value, this._index, this._index + length);
-		this._index += length;
+		this.buffer().fill(value, this.tell(), this.tell() + length);
+		this.seek('+', length);
 
 		return this;
 	},
@@ -86,20 +98,20 @@ Cursor.prototype =
 	{
 		if (arguments.length === 0)
 		{
-			length = this.length - this._index;
+			length = this.length - this.tell();
 		}
 
-		var c = new this.constructor(this._buffer.slice(this._index, this._index + length));
-		this._index += length;
+		var c = new this.constructor(this.buffer().slice(this.tell(), this.tell() + length));
+		this.seek('+', length);
 
 		return c;
 	},
 
 	copyFrom: function(source)
 	{
-		var buf = source instanceof Buffer ? source: source._buffer;
-		buf.copy(this._buffer, this.tell(), 0, buf.length);
-		this._index += buf.length;
+		var buf = source instanceof Buffer ? source: source.buffer();
+		buf.copy(this.buffer(), this.tell(), 0, buf.length);
+		this.seek('+', buf.length);
 
 		return this;
 	},
@@ -109,15 +121,15 @@ Cursor.prototype =
 		if (arguments.length === 0)
 		{
 			encoding = 'utf8';
-			length = this._buffer.length - this._index;
+			length = this.buffer().length - this.tell();
 		}
 		else if (arguments.length === 1)
 		{
-			length = this._buffer.length - this._index;
+			length = this.buffer().length - this.tell();
 		}
 
-		var val = this._buffer.toString(encoding, this._index, this._index + length);
-		this._index += length;
+		var val = this.buffer().toString(encoding, this.tell(), this.tell() + length);
+		this.seek('+', length);
 
 		return val;
 	}
@@ -134,8 +146,8 @@ Cursor.prototype =
 	{
 		Cursor.prototype[method] = function()
 		{
-			var val = this._buffer[method](this._index);
-			this._index += arr[0];
+			var val = this.buffer()[method](this.tell());
+			this.seek('+', arr[0]);
 
 			return val;
 		};
@@ -153,12 +165,63 @@ Cursor.prototype =
 	{
 		Cursor.prototype[method] = function(val)
 		{
-			val = this._buffer[method](val, this._index);
-			this._index += arr[0];
+			val = this.buffer()[method](val, this.tell());
+			this.seek('+', arr[0]);
 
 			return this;
 		};
 	});
 });
+
+//basic extend functionality to facilitate
+//writing your own cursor while still providing
+//access to low level r/w functionality
+Cursor.extend = function(C, proto)
+{
+	var parent = this;
+
+	if (arguments.length === 1)
+	{
+		proto = C;
+		C = null;
+	}
+
+	proto = proto || {};
+
+	C = C || function ctor(buffer)
+	{
+		if (!(this instanceof C))
+		{
+			return new C(buffer);
+		}
+
+		parent.call(this, buffer);
+	};
+
+	require('util').inherits(C, parent);
+
+	for (var i in proto)
+	{
+		C.prototype[i] = extendProto(parent.prototype, i, proto[i]);
+	}
+
+	C.extend = parent.extend;
+
+	return C;
+};
+
+function extendProto(parentProto, name, fn)
+{
+	if (!parentProto[name])
+	{
+		return fn;
+	}
+
+	return function()
+	{
+		this.__super = parentProto[name];
+		return fn.apply(this, arguments);
+	};
+}
 
 module.exports = Cursor;
