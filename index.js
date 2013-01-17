@@ -200,28 +200,26 @@ Cursor.extend = function(C, proto)
 
 	require('util').inherits(C, parent);
 
+	C.extend = parent.extend;
+	C.define = parent.define;
+
 	for (var i in proto)
 	{
-		C.prototype[i] = extendProto(parent.prototype, i, proto[i]);
+		C.define(i, proto[i]);
 	}
-
-	C.extend = parent.extend;
 
 	return C;
 };
 
-function extendProto(parentProto, name, fn)
+Cursor.define = function(name, fn)
 {
-	if (!parentProto[name])
-	{
-		return fn;
-	}
+	var proto = this.prototype[name];
 
-	return function()
+	this.prototype[name] = proto && function()
 	{
-		this.__super = parentProto[name];
+		this.__super = proto;
 		return fn.apply(this, arguments);
-	};
-}
+	} || fn;
+};
 
 module.exports = Cursor;
