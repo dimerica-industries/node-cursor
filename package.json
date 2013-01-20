@@ -8,5 +8,6 @@
   },
   "repository": "https://github.com/dimerica-industries/node-cursor/",
   "author": "Isao Jonas <isao@dimerica-industries.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": ["cursor", "buffer"]
 }
