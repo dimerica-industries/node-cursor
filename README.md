@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/dimerica-industries/node-cursor.png)](https://travis-ci.org/dimerica-industries/node-cursor)
+
 # Description
 Wrap your buffers! Fluid API! Other things!
 
