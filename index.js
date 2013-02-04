@@ -14,147 +14,144 @@ var Cursor = function(buffer)
 	this.rewind();
 };
 
-Cursor.prototype =
+Cursor.prototype._setBuffer = function(buffer)
 {
-	_setBuffer: function(buffer)
+	this._buffer = buffer;
+	this.length = buffer.length;
+};
+
+Cursor.prototype.buffer = function()
+{
+	return this._buffer;
+};
+
+Cursor.prototype.tap = function(cb)
+{
+	cb(this);
+	return this;
+};
+
+Cursor.prototype.clone = function(newIndex)
+{
+	var c = new this.constructor(this.buffer());
+	c.seek(arguments.length === 0 ? this.tell() : newIndex);
+
+	return c;
+};
+
+Cursor.prototype.tell = function()
+{
+	return this._index;
+};
+
+Cursor.prototype.seek = function(op, index)
+{
+	if (arguments.length == 1)
 	{
-		this._buffer = buffer;
-		this.length = buffer.length;
-	},
-
-	buffer: function()
-	{
-		return this._buffer;
-	},
-
-	tap: function(cb)
-	{
-		cb(this);
-		return this;
-	},
-
-	clone: function(newIndex)
-	{
-		var c = new this.constructor(this.buffer());
-		c.seek(arguments.length === 0 ? this.tell() : newIndex);
-
-		return c;
-	},
-
-	tell: function()
-	{
-		return this._index;
-	},
-
-	seek: function(op, index)
-	{
-		if (arguments.length == 1)
-		{
-			index = op;
-			op = '=';
-		}
-
-		if (op == '+')
-		{
-			this._index += index;
-		}
-		else if (op == '-')
-		{
-			this._index -= index;
-		}
-		else
-		{
-			this._index = index;
-		}
-
-		return this;
-	},
-
-	rewind: function()
-	{
-		return this.seek(0);
-	},
-
-	eof: function()
-	{
-		return this.tell() == this.buffer().length;
-	},
-
-	write: function(string, length, encoding)
-	{
-		return this.seek('+', this.buffer().write(string, this.tell(), length, encoding));
-	},
-
-	fill: function(value, length)
-	{
-		if (arguments.length == 1)
-		{
-			length = this.buffer().length - this.tell();
-		}
-		
-		this.buffer().fill(value, this.tell(), this.tell() + length);
-		this.seek('+', length);
-
-		return this;
-	},
-
-	slice: function(length)
-	{
-		if (arguments.length === 0)
-		{
-			length = this.length - this.tell();
-		}
-
-		var c = new this.constructor(this.buffer().slice(this.tell(), this.tell() + length));
-		this.seek('+', length);
-
-		return c;
-	},
-
-	copyFrom: function(source)
-	{
-		var buf = source instanceof Buffer ? source: source.buffer();
-		buf.copy(this.buffer(), this.tell(), 0, buf.length);
-		this.seek('+', buf.length);
-
-		return this;
-	},
-
-	concat: function(list)
-	{
-		for (var i in list)
-		{
-			if (list[i] instanceof Cursor)
-			{
-				list[i] = list[i].buffer();
-			}
-		}
-
-		list.unshift(this.buffer());
-
-		var b = Buffer.concat(list);
-		this._setBuffer(b);
-
-		return this;
-	},
-
-	toString: function(encoding, length)
-	{
-		if (arguments.length === 0)
-		{
-			encoding = 'utf8';
-			length = this.buffer().length - this.tell();
-		}
-		else if (arguments.length === 1)
-		{
-			length = this.buffer().length - this.tell();
-		}
-
-		var val = this.buffer().toString(encoding, this.tell(), this.tell() + length);
-		this.seek('+', length);
-
-		return val;
+		index = op;
+		op = '=';
 	}
+
+	if (op == '+')
+	{
+		this._index += index;
+	}
+	else if (op == '-')
+	{
+		this._index -= index;
+	}
+	else
+	{
+		this._index = index;
+	}
+
+	return this;
+};
+
+Cursor.prototype.rewind = function()
+{
+	return this.seek(0);
+};
+
+Cursor.prototype.eof = function()
+{
+	return this.tell() == this.buffer().length;
+};
+
+Cursor.prototype.write = function(string, length, encoding)
+{
+	return this.seek('+', this.buffer().write(string, this.tell(), length, encoding));
+};
+
+Cursor.prototype.fill = function(value, length)
+{
+	if (arguments.length == 1)
+	{
+		length = this.buffer().length - this.tell();
+	}
+	
+	this.buffer().fill(value, this.tell(), this.tell() + length);
+	this.seek('+', length);
+
+	return this;
+};
+
+Cursor.prototype.slice = function(length)
+{
+	if (arguments.length === 0)
+	{
+		length = this.length - this.tell();
+	}
+
+	var c = new this.constructor(this.buffer().slice(this.tell(), this.tell() + length));
+	this.seek('+', length);
+
+	return c;
+};
+
+Cursor.prototype.copyFrom = function(source)
+{
+	var buf = source instanceof Buffer ? source: source.buffer();
+	buf.copy(this.buffer(), this.tell(), 0, buf.length);
+	this.seek('+', buf.length);
+
+	return this;
+};
+
+Cursor.prototype.concat = function(list)
+{
+	for (var i in list)
+	{
+		if (list[i] instanceof Cursor)
+		{
+			list[i] = list[i].buffer();
+		}
+	}
+
+	list.unshift(this.buffer());
+
+	var b = Buffer.concat(list);
+	this._setBuffer(b);
+
+	return this;
+};
+
+Cursor.prototype.toString = function(encoding, length)
+{
+	if (arguments.length === 0)
+	{
+		encoding = 'utf8';
+		length = this.buffer().length - this.tell();
+	}
+	else if (arguments.length === 1)
+	{
+		length = this.buffer().length - this.tell();
+	}
+
+	var val = this.buffer().toString(encoding, this.tell(), this.tell() + length);
+	this.seek('+', length);
+
+	return val;
 };
 
 [

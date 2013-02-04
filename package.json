@@ -1,6 +1,6 @@
 {
   "name": "cursor",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Cursor implementation for node buffers",
   "main": "index.js",
   "scripts": {
