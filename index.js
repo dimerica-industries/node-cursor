@@ -7,7 +7,14 @@ var Cursor = function(buffer)
 
 	if (!(buffer instanceof Buffer))
 	{
-		buffer = new Buffer(buffer);
+		if (typeof buffer === 'number')
+		{
+			buffer = Buffer.alloc(buffer);
+		}
+		else
+		{
+			buffer = Buffer.from(buffer);
+		}
 	}
 
 	this._setBuffer(buffer);
